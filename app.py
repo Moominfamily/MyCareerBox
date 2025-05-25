@@ -103,7 +103,7 @@ def main_app():
     if st.button("Log Out"):
         st.session_state.authenticated = False
         st.session_state.user = None
-        st.session_state.records = []
+        st.session_state.login_error = False
         st.session_state.user_email = None
         st.experimental_set_query_params()
         st.rerun()
@@ -197,6 +197,11 @@ def main_app():
                 st.markdown(href, unsafe_allow_html=True)
             os.remove(tmp.name)
 
+# ----------------- Restore Session -----------------
+query_params = st.query_params
+if not st.session_state.authenticated and "email" in query_params:
+    st.session_state.user_email = query_params["email"]
+    st.session_state.authenticated = True
 # ----------------- Run App -----------------
 if st.session_state.authenticated and not st.session_state.records:
     load_records()
