@@ -64,6 +64,7 @@ def login():
             st.session_state.authenticated = True
             st.session_state.user_email = email
             st.session_state.login_error = False
+            st.experimental_set_query_params(email=email)
             st.rerun()
         except:
             st.session_state.login_error = True
@@ -178,6 +179,11 @@ def main_app():
                 href = f'<a href="data:application/octet-stream;base64,{b64}" download="records.xlsx">Click here to download your Excel file</a>'
                 st.markdown(href, unsafe_allow_html=True)
             os.remove(tmp.name)
+
+query_params = st.experimental_get_query_params()
+if not st.session_state.authenticated and "email" in query_params:
+    st.session_state.user_email = query_params["email"][0]
+    st.session_state.authenticated = True
 
 # ----------------- Run App -----------------
 if st.session_state.authenticated and not st.session_state.records:
