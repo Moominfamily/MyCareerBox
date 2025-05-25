@@ -157,8 +157,14 @@ def main_app():
                     st.markdown("**Job Description:**")
                     st.code(r["jd"])
                 if st.button(f"Delete Record {i+1}", key=f"delete_{i}"):
-                    st.session_state.records.pop(i)
-                    st.rerun()
+                    try:
+                        doc_id = r.get("doc_id")
+                        if doc_id:
+                            db.collection("records").document(st.session_state.user['email']).collection("entries").document(doc_id).delete()
+                        st.session_state.records.pop(i)
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"❌ Failed to delete record from Firestore: {e}")
 
     if st.button("Download All Records as Excel") and st.session_state.records:
         df = pd.DataFrame(st.session_state.records)
@@ -174,7 +180,9 @@ def main_app():
 if st.session_state.authenticated and not st.session_state.records:
     docs = db.collection("records").document(st.session_state.user['email']).collection("entries").stream()
     for doc in docs:
-        st.session_state.records.append(doc.to_dict())
+        record = doc.to_dict()
+        record["doc_id"] = doc.id
+        st.session_state.records.append(record)
 if st.session_state.authenticated:
     main_app()
 else:
