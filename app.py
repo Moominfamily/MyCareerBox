@@ -31,7 +31,7 @@ if "user_email" not in st.session_state:
     st.session_state.user_email = None
 
 # ----------------- Restore from Query Params -----------------
-query_params = st.experimental_get_query_params()
+query_params = query_params = st.query_params
 if not st.session_state.authenticated and "email" in query_params:
     st.session_state.user_email = query_params["email"][0]
     st.session_state.authenticated = True
