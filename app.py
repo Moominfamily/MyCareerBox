@@ -27,6 +27,8 @@ if "user" not in st.session_state:
     st.session_state.user = None
 if "records" not in st.session_state:
     st.session_state.records = []
+if "user_email" not in st.session_state:
+    st.session_state.user_email = None
 
 # ----------------- UI: Logo and Title -----------------
 with open("logo_white.png", "rb") as image_file:
@@ -60,7 +62,7 @@ def login():
         try:
             user = auth.sign_in_with_email_and_password(email, password)
             st.session_state.authenticated = True
-            st.session_state.user = user
+            st.session_state.user_email = email
             st.session_state.login_error = False
             st.rerun()
         except:
@@ -105,7 +107,7 @@ def main_app():
     if submitted:
         if resume_file:
             filename = resume_file.name
-            blob = bucket.blob(f"{st.session_state.user['email']}/{filename}")
+            blob = bucket.blob(f"{st.session_state.user_email}/{filename}")
             blob.upload_from_file(resume_file, content_type=resume_file.type)
         else:
             filename = "None"
@@ -121,10 +123,11 @@ def main_app():
             "date": str(dt)
         }
 
-        user_email = st.session_state.user['email']
+        user_email = st.session_state.user_email
 
         try:
             db.collection("records").document(user_email).collection("entries").add(record)
+            st.session_state.records.append(record)
             st.success("Record written to Firestore successfully.")
         except Exception as e:
             st.error(f"❌ Firestore write failed: {e}")
@@ -138,7 +141,7 @@ def main_app():
                 st.markdown(f"**Date:** {r['date']}")
                 st.markdown(f"**URL:** [{r['url']}]({r['url']})")
                 if r["resume"] != "None":
-                    blob = bucket.blob(f"{st.session_state.user['email']}/{r['resume']}")
+                    blob = bucket.blob(f"{st.session_state.user_email}/{r['resume']}")
                     signed_url = blob.generate_signed_url(
                         expiration=datetime.timedelta(hours=1),
                         method="GET"
@@ -160,7 +163,7 @@ def main_app():
                     try:
                         doc_id = r.get("doc_id")
                         if doc_id:
-                            db.collection("records").document(st.session_state.user['email']).collection("entries").document(doc_id).delete()
+                            db.collection("records").document(st.session_state.user_email).collection("entries").document(doc_id).delete()
                         st.session_state.records.pop(i)
                         st.rerun()
                     except Exception as e:
@@ -178,7 +181,7 @@ def main_app():
 
 # ----------------- Run App -----------------
 if st.session_state.authenticated and not st.session_state.records:
-    docs = db.collection("records").document(st.session_state.user['email']).collection("entries").stream()
+    docs = db.collection("records").document(st.session_state.user_email).collection("entries").stream()
     for doc in docs:
         record = doc.to_dict()
         record["doc_id"] = doc.id
