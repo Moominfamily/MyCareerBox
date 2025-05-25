@@ -1,0 +1,9 @@
+streamlit
+pandas
+openpyxl
+pyrebase4
+pycryptodome
+google-cloud-storage
+google-cloud-firestore
+google-auth
+setuptools
