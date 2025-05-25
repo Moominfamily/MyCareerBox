@@ -30,6 +30,12 @@ if "records" not in st.session_state:
 if "user_email" not in st.session_state:
     st.session_state.user_email = None
 
+# ----------------- Restore from Query Params -----------------
+query_params = st.experimental_get_query_params()
+if not st.session_state.authenticated and "email" in query_params:
+    st.session_state.user_email = query_params["email"][0]
+    st.session_state.authenticated = True
+
 # ----------------- UI: Logo and Title -----------------
 with open("logo_white.png", "rb") as image_file:
     logo_base64 = base64.b64encode(image_file.read()).decode()
@@ -48,6 +54,17 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
+# ----------------- Load Records -----------------
+def load_records():
+    try:
+        docs = db.collection("records").document(st.session_state.user_email).collection("entries").stream()
+        for doc in docs:
+            record = doc.to_dict()
+            record["doc_id"] = doc.id
+            st.session_state.records.append(record)
+    except Exception as e:
+        st.error(f"❌ Failed to load records: {e}")
 
 # ----------------- Authentication -----------------
 def login():
@@ -86,7 +103,9 @@ def main_app():
     if st.button("Log Out"):
         st.session_state.authenticated = False
         st.session_state.user = None
-        st.session_state.login_error = False
+        st.session_state.records = []
+        st.session_state.user_email = None
+        st.experimental_set_query_params()
         st.rerun()
 
     with st.form("entry_form"):
@@ -124,10 +143,8 @@ def main_app():
             "date": str(dt)
         }
 
-        user_email = st.session_state.user_email
-
         try:
-            db.collection("records").document(user_email).collection("entries").add(record)
+            db.collection("records").document(st.session_state.user_email).collection("entries").add(record)
             st.session_state.records.append(record)
             st.success("Record written to Firestore successfully.")
         except Exception as e:
@@ -180,18 +197,10 @@ def main_app():
                 st.markdown(href, unsafe_allow_html=True)
             os.remove(tmp.name)
 
-query_params = st.experimental_get_query_params()
-if not st.session_state.authenticated and "email" in query_params:
-    st.session_state.user_email = query_params["email"][0]
-    st.session_state.authenticated = True
-
 # ----------------- Run App -----------------
 if st.session_state.authenticated and not st.session_state.records:
-    docs = db.collection("records").document(st.session_state.user_email).collection("entries").stream()
-    for doc in docs:
-        record = doc.to_dict()
-        record["doc_id"] = doc.id
-        st.session_state.records.append(record)
+    load_records()
+
 if st.session_state.authenticated:
     main_app()
 else:
