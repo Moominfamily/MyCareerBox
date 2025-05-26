@@ -23,17 +23,15 @@ bucket = storage_client.get_bucket("mycareerbox-bw.firebasestorage.app")
 # ----------------- Session State -----------------
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
-if "user" not in st.session_state:
-    st.session_state.user = None
-if "records" not in st.session_state:
-    st.session_state.records = []
 if "user_email" not in st.session_state:
     st.session_state.user_email = None
+if "records" not in st.session_state:
+    st.session_state.records = []
 
 # ----------------- Restore from Query Params -----------------
-query_params = query_params = st.query_params
+query_params = st.query_params
 if not st.session_state.authenticated and "email" in query_params:
-    st.session_state.user_email = query_params["email"][0]
+    st.session_state.user_email = query_params["email"]
     st.session_state.authenticated = True
 
 # ----------------- UI: Logo and Title -----------------
@@ -58,6 +56,7 @@ st.markdown(
 # ----------------- Load Records -----------------
 def load_records():
     try:
+        st.session_state.records = []  # ✅ Ensure reset
         docs = db.collection("records").document(st.session_state.user_email).collection("entries").stream()
         for doc in docs:
             record = doc.to_dict()
@@ -80,22 +79,11 @@ def login():
             user = auth.sign_in_with_email_and_password(email, password)
             st.session_state.authenticated = True
             st.session_state.user_email = email
-            st.session_state.login_error = False
-            st.session_state.records = []
-            docs = db.collection("records").document(email).collection("entries").stream()
-            fresh_records = []
-            for doc in docs:
-                record = doc.to_dict()
-                record["doc_id"] = doc.id
-                fresh_records.append(record)
-            st.session_state.records = fresh_records
             st.query_params.update({"email": email})
             st.rerun()
-            st.stop()
         except:
             st.session_state.login_error = True
             st.rerun()
-            st.stop()
 
     if st.session_state.login_error:
         st.error("Invalid email or password.")
@@ -112,9 +100,8 @@ def main_app():
     st.title("Internship & Job Application Tracker")
     if st.button("Log Out"):
         st.session_state.authenticated = False
-        st.session_state.user = None
-        st.session_state.login_error = False
         st.session_state.user_email = None
+        st.session_state.records = []
         st.query_params.clear()
         st.rerun()
 
@@ -155,12 +142,13 @@ def main_app():
 
         try:
             doc_ref = db.collection("records") \
-                        .document(user_email) \
+                        .document(st.session_state.user_email) \
                         .collection("entries") \
                         .add(record)
             record["doc_id"] = doc_ref[1].id
             st.session_state.records.append(record)
             st.success("Record written to Firestore successfully.")
+            st.rerun()
         except Exception as e:
             st.error(f"❌ Firestore write failed: {e}")
 
@@ -191,8 +179,8 @@ def main_app():
 
                 if new_status != r["status"]:
                     try:
-                       doc_id = r.get("doc_id")
-                       if doc_id:
+                        doc_id = r.get("doc_id")
+                        if doc_id:
                             db.collection("records") \
                               .document(st.session_state.user_email) \
                               .collection("entries") \
@@ -225,11 +213,6 @@ def main_app():
                 st.markdown(href, unsafe_allow_html=True)
             os.remove(tmp.name)
 
-# ----------------- Restore Session -----------------
-query_params = st.query_params
-if not st.session_state.authenticated and "email" in query_params:
-    st.session_state.user_email = query_params["email"]
-    st.session_state.authenticated = True
 # ----------------- Run App -----------------
 if st.session_state.authenticated and not st.session_state.records:
     load_records()
