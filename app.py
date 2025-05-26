@@ -41,21 +41,10 @@ with open("logo_white.png", "rb") as image_file:
 st.markdown(
     f"""
     <style>
-    .block-container {{
-        padding-top: 1.5rem !important;
-    }}
-    .logo-wrapper {{
-        margin-top: -2rem;
-        margin-bottom: -6rem;
-        text-align: left;
-        padding-left: -6rem;
-    }}
-    .logo {{
-        height: 200px;
-    }}
-    h1, h2, h3, h4, h5, h6 {{
-        margin-top: 0.5rem;
-    }}
+    .block-container {{padding-top: 3rem;}}
+    .logo-wrapper {{margin-top: -1rem; margin-bottom: -3rem;}}
+    .logo {{height: 240px; display: block;}}
+    h1 {{font-size: 2rem !important;}}
     </style>
     <div class="logo-wrapper">
         <img src="data:image/png;base64,{logo_base64}" class="logo">
