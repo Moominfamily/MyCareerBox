@@ -29,12 +29,11 @@ if "records" not in st.session_state:
     st.session_state.records = []
 if "user_email" not in st.session_state:
     st.session_state.user_email = None
+if "login_error" not in st.session_state:
+    st.session_state.login_error = False
 
-# ----------------- Restore from Query Params -----------------
-query_params = query_params = st.query_params
-if not st.session_state.authenticated and "email" in query_params:
-    st.session_state.user_email = query_params["email"][0]
-    st.session_state.authenticated = True
+# ----------------- Clear Records Early -----------------
+st.session_state.records = []
 
 # ----------------- UI: Logo and Title -----------------
 with open("logo_white.png", "rb") as image_file:
@@ -55,25 +54,11 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# ----------------- Load Records -----------------
-def load_records():
-    try:
-        docs = db.collection("records").document(st.session_state.user_email).collection("entries").stream()
-        for doc in docs:
-            record = doc.to_dict()
-            record["doc_id"] = doc.id
-            st.session_state.records.append(record)
-    except Exception as e:
-        st.error(f"❌ Failed to load records: {e}")
-
 # ----------------- Authentication -----------------
 def login():
     st.title("Log In")
     email = st.text_input("Email")
     password = st.text_input("Password", type="password")
-
-    if "login_error" not in st.session_state:
-        st.session_state.login_error = False
 
     if st.button("Log In"):
         try:
@@ -81,7 +66,6 @@ def login():
             st.session_state.authenticated = True
             st.session_state.user_email = email
             st.session_state.login_error = False
-            st.session_state.records = []
             st.query_params.update({"email": email})
             st.rerun()
         except:
@@ -144,6 +128,8 @@ def main_app():
             "date": str(dt)
         }
 
+        user_email = st.session_state.user_email
+
         try:
             doc_ref = db.collection("records") \
                         .document(user_email) \
@@ -173,24 +159,21 @@ def main_app():
                 else:
                     st.markdown("**Resume:** None")
                 st.markdown(f"**Contact:** {r['contact']}")
-                new_status = st.selectbox(
-                    "Update Status",
-                    ["To Apply", "Online Test", "1st Interview", "2nd Interview", "3rd Interview", "Offer", "No Response", "Rejected"],
+                new_status = st.selectbox("Update Status", [
+                    "To Apply", "Online Test", "1st Interview", "2nd Interview", "3rd Interview", "Offer", "No Response", "Rejected"],
                     index=["To Apply", "Online Test", "1st Interview", "2nd Interview", "3rd Interview", "Offer", "No Response", "Rejected"].index(r["status"]),
                     key=f"status_{i}"
                 )
-
                 if new_status != r["status"]:
+                    r["status"] = new_status
                     try:
-                       doc_id = r.get("doc_id")
-                       if doc_id:
+                        doc_id = r.get("doc_id")
+                        if doc_id:
                             db.collection("records") \
                               .document(st.session_state.user_email) \
                               .collection("entries") \
                               .document(doc_id) \
                               .update({"status": new_status})
-                            r["status"] = new_status
-                            st.rerun()
                     except Exception as e:
                         st.error(f"❌ Failed to update status in Firestore: {e}")
                 if r["jd"]:
@@ -221,7 +204,15 @@ query_params = st.query_params
 if not st.session_state.authenticated and "email" in query_params:
     st.session_state.user_email = query_params["email"]
     st.session_state.authenticated = True
+
 # ----------------- Run App -----------------
+def load_records():
+    docs = db.collection("records").document(st.session_state.user_email).collection("entries").stream()
+    for doc in docs:
+        record = doc.to_dict()
+        record["doc_id"] = doc.id
+        st.session_state.records.append(record)
+
 if st.session_state.authenticated and not st.session_state.records:
     load_records()
 
