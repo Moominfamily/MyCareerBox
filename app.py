@@ -144,7 +144,11 @@ def main_app():
         }
 
         try:
-            db.collection("records").document(st.session_state.user_email).collection("entries").add(record)
+            doc_ref = db.collection("records") \
+                        .document(user_email) \
+                        .collection("entries") \
+                        .add(record)
+            record["doc_id"] = doc_ref[1].id
             st.session_state.records.append(record)
             st.success("Record written to Firestore successfully.")
         except Exception as e:
