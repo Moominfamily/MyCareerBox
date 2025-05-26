@@ -56,12 +56,13 @@ st.markdown(
 # ----------------- Load Records -----------------
 def load_records():
     try:
-        st.session_state.records = []  # ✅ Ensure reset
         docs = db.collection("records").document(st.session_state.user_email).collection("entries").stream()
+        records = []
         for doc in docs:
             record = doc.to_dict()
             record["doc_id"] = doc.id
-            st.session_state.records.insert(0, record)
+            records.append(record)
+        st.session_state.records = sorted(records, key=lambda r: r["date"], reverse=True)
     except Exception as e:
         st.error(f"❌ Failed to load records: {e}")
 
