@@ -45,13 +45,13 @@ st.markdown(
         padding-top: 1.5rem !important;
     }}
     .logo-wrapper {{
-        margin-top: -3rem;
-        margin-bottom: -6rem;
+        margin-top: -4rem;
+        margin-bottom: -7rem;
         text-align: left;
-        padding-left: -2rem;
+        padding-left: -4rem;
     }}
     .logo {{
-        height: 240px;
+        height: 200px;
     }}
     h1, h2, h3, h4, h5, h6 {{
         margin-top: 0.5rem;
