@@ -81,7 +81,7 @@ def login():
             st.session_state.authenticated = True
             st.session_state.user_email = email
             st.session_state.login_error = False
-            st.experimental_set_query_params(email=email)
+            st.query_params.update({"email": email})
             st.rerun()
         except:
             st.session_state.login_error = True
@@ -105,7 +105,7 @@ def main_app():
         st.session_state.user = None
         st.session_state.login_error = False
         st.session_state.user_email = None
-        st.experimental_set_query_params()
+        st.query_params.clear()
         st.rerun()
 
     with st.form("entry_form"):
