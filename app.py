@@ -23,51 +23,63 @@ bucket = storage_client.get_bucket("mycareerbox-bw.firebasestorage.app")
 # ----------------- Session State -----------------
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
-if "user_email" not in st.session_state:
-    st.session_state.user_email = None
+if "user" not in st.session_state:
+    st.session_state.user = None
 if "records" not in st.session_state:
     st.session_state.records = []
+if "user_email" not in st.session_state:
+    st.session_state.user_email = None
 
 # ----------------- Restore from Query Params -----------------
-query_params = st.query_params
+query_params = query_params = st.query_params
 if not st.session_state.authenticated and "email" in query_params:
-    st.session_state.user_email = query_params["email"]
+    st.session_state.user_email = query_params["email"][0]
     st.session_state.authenticated = True
 
-# ----------------- UI: Logo and Title -----------------
-with open("logo_white.png", "rb") as image_file:
-    logo_base64 = base64.b64encode(image_file.read()).decode()
+# ----------------- Logo Rendering -----------------
+def render_logo():
+    with open("logo_white.png", "rb") as image_file:
+        logo_base64 = base64.b64encode(image_file.read()).decode()
 
-st.markdown(
-    f"""
-    <style>
-    .block-container {{padding-top: 3rem;}}
-    .logo-wrapper {{margin-top: -1rem; margin-bottom: -3rem;}}
-    .logo {{height: 240px; display: block;}}
-    h1 {{font-size: 2rem !important;}}
-    </style>
-    <div class="logo-wrapper">
-        <img src="data:image/png;base64,{logo_base64}" class="logo">
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+    st.markdown(
+        f"""
+        <style>
+        .block-container {{
+            padding-top: 1.5rem !important;
+        }}
+        .logo-wrapper {{
+            margin-top: -2rem;
+            margin-bottom: -2rem;
+            text-align: center;
+        }}
+        .logo {{
+            height: 180px;
+        }}
+        h1, h2, h3, h4, h5, h6 {{
+            margin-top: 0.5rem;
+        }}
+        </style>
+        <div class="logo-wrapper">
+            <img src="data:image/png;base64,{logo_base64}" class="logo">
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 # ----------------- Load Records -----------------
 def load_records():
     try:
         docs = db.collection("records").document(st.session_state.user_email).collection("entries").stream()
-        records = []
         for doc in docs:
             record = doc.to_dict()
             record["doc_id"] = doc.id
-            records.append(record)
-        st.session_state.records = sorted(records, key=lambda r: r["date"], reverse=True)
+            st.session_state.records.insert(0, record)
     except Exception as e:
         st.error(f"❌ Failed to load records: {e}")
 
 # ----------------- Authentication -----------------
 def login():
+    render_logo()
     st.title("Log In")
     email = st.text_input("Email")
     password = st.text_input("Password", type="password")
@@ -80,11 +92,22 @@ def login():
             user = auth.sign_in_with_email_and_password(email, password)
             st.session_state.authenticated = True
             st.session_state.user_email = email
+            st.session_state.login_error = False
+            st.session_state.records = []
+            docs = db.collection("records").document(email).collection("entries").stream()
+            fresh_records = []
+            for doc in docs:
+                record = doc.to_dict()
+                record["doc_id"] = doc.id
+                fresh_records.insert(0, record)
+            st.session_state.records = fresh_records
             st.query_params.update({"email": email})
             st.rerun()
+            st.stop()
         except:
             st.session_state.login_error = True
             st.rerun()
+            st.stop()
 
     if st.session_state.login_error:
         st.error("Invalid email or password.")
@@ -98,11 +121,13 @@ def login():
 
 # ----------------- Main App -----------------
 def main_app():
+    render_logo()
     st.title("Internship & Job Application Tracker")
     if st.button("Log Out"):
         st.session_state.authenticated = False
+        st.session_state.user = None
+        st.session_state.login_error = False
         st.session_state.user_email = None
-        st.session_state.records = []
         st.query_params.clear()
         st.rerun()
 
@@ -149,7 +174,6 @@ def main_app():
             record["doc_id"] = doc_ref[1].id
             st.session_state.records.insert(0, record)
             st.success("Record written to Firestore successfully.")
-            st.rerun()
         except Exception as e:
             st.error(f"❌ Firestore write failed: {e}")
 
@@ -214,6 +238,11 @@ def main_app():
                 st.markdown(href, unsafe_allow_html=True)
             os.remove(tmp.name)
 
+# ----------------- Restore Session -----------------
+query_params = st.query_params
+if not st.session_state.authenticated and "email" in query_params:
+    st.session_state.user_email = query_params["email"]
+    st.session_state.authenticated = True
 # ----------------- Run App -----------------
 if st.session_state.authenticated and not st.session_state.records:
     load_records()
