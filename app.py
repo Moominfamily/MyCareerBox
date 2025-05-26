@@ -214,9 +214,23 @@ if not st.session_state.authenticated and "email" in query_params:
     load_records()
 
 # ----------------- Run App -----------------
+query_params = st.query_params
+
+if not st.session_state.authenticated and "email" in query_params:
+    st.session_state.user_email = query_params["email"]
+    st.session_state.authenticated = True
+
 if st.session_state.authenticated:
-    if not st.session_state.records:
-        load_records()
+    st.session_state.records = []
+    try:
+        docs = db.collection("records").document(st.session_state.user_email).collection("entries").stream()
+        for doc in docs:
+            record = doc.to_dict()
+            record["doc_id"] = doc.id
+            st.session_state.records.append(record)
+    except Exception as e:
+        st.error(f"❌ Failed to load records from Firestore: {e}")
+    
     main_app()
 else:
     login()
