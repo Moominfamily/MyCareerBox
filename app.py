@@ -82,6 +82,7 @@ def login():
             st.session_state.user_email = email
             st.session_state.login_error = False
             st.session_state.records = []
+            load_records()
             st.query_params.update({"email": email})
             st.rerun()
         except:
