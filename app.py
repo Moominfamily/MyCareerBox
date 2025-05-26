@@ -45,8 +45,8 @@ st.markdown(
         padding-top: 1.5rem !important;
     }}
     .logo-wrapper {{
-        margin-top: 1rem;
-        margin-bottom: -2rem;
+        margin-top: -1rem;
+        margin-bottom: -5rem;
         text-align: left;
         padding-left: 0.1rem;
     }}
