@@ -178,7 +178,7 @@ def main_app():
                 if new_status != r["status"]:
                     try:
                        doc_id = r.get("doc_id")
-                        if doc_id:
+                       if doc_id:
                             db.collection("records") \
                               .document(st.session_state.user_email) \
                               .collection("entries") \
