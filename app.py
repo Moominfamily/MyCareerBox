@@ -168,12 +168,25 @@ def main_app():
                 else:
                     st.markdown("**Resume:** None")
                 st.markdown(f"**Contact:** {r['contact']}")
-                new_status = st.selectbox("Update Status", [
-                    "To Apply", "Online Test", "1st Interview", "2nd Interview", "3rd Interview", "Offer", "No Response", "Rejected"],
+                new_status = st.selectbox(
+                    "Update Status",
+                    ["To Apply", "Online Test", "1st Interview", "2nd Interview", "3rd Interview", "Offer", "No Response", "Rejected"],
                     index=["To Apply", "Online Test", "1st Interview", "2nd Interview", "3rd Interview", "Offer", "No Response", "Rejected"].index(r["status"]),
                     key=f"status_{i}"
                 )
-                r["status"] = new_status
+
+                if new_status != r["status"]:
+                    r["status"] = new_status
+                    try:
+                        doc_id = r.get("doc_id")
+                        if doc_id:
+                            db.collection("records") \
+                              .document(st.session_state.user_email) \
+                              .collection("entries") \
+                              .document(doc_id) \
+                              .update({"status": new_status})
+                    except Exception as e:
+                        st.error(f"❌ Failed to update status in Firestore: {e}")
                 if r["jd"]:
                     st.markdown("**Job Description:**")
                     st.code(r["jd"])
