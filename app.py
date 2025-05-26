@@ -87,7 +87,6 @@ def login():
                 record = doc.to_dict()
                 record["doc_id"] = doc.id
                 st.session_state.records.append(record)
-        st.rerun()
             st.rerun()
         except:
             st.session_state.login_error = True
