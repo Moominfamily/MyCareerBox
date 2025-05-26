@@ -18,7 +18,7 @@ service_account_info = st.secrets["gcp_service_account"]
 credentials = service_account.Credentials.from_service_account_info(service_account_info)
 storage_client = storage.Client(credentials=credentials)
 db = firestore.Client(credentials=credentials)
-bucket = storage_client.get_bucket("mycareerbox-bw.appspot.com")
+bucket = storage_client.get_bucket("mycareerbox-bw")
 
 # ----------------- Session State -----------------
 if "authenticated" not in st.session_state:
