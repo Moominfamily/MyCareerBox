@@ -20,27 +20,16 @@ storage_client = storage.Client(credentials=credentials)
 db = firestore.Client(credentials=credentials)
 bucket = storage_client.get_bucket("mycareerbox-bw.firebasestorage.app")
 
-# ----------------- Session State -----------------
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
-if "user" not in st.session_state:
-    st.session_state.user = None
-if "records" not in st.session_state:
-    st.session_state.records = []
-if "user_email" not in st.session_state:
-    st.session_state.user_email = None
-if "login_error" not in st.session_state:
-    st.session_state.login_error = False
+# ----------------- Session State Initialization -----------------
+for key in ["authenticated", "user_email", "records", "login_error"]:
+    if key not in st.session_state:
+        st.session_state[key] = False if key == "authenticated" else None if key == "user_email" else [] if key == "records" else False
 
-# ----------------- Clear Records Early -----------------
-st.session_state.records = []
-
-# ----------------- UI: Logo and Title -----------------
+# ----------------- UI -----------------
 with open("logo_white.png", "rb") as image_file:
     logo_base64 = base64.b64encode(image_file.read()).decode()
 
-st.markdown(
-    f"""
+st.markdown(f"""
     <style>
     .block-container {{padding-top: 3rem;}}
     .logo-wrapper {{margin-top: -1rem; margin-bottom: -3rem;}}
@@ -50,9 +39,13 @@ st.markdown(
     <div class="logo-wrapper">
         <img src="data:image/png;base64,{logo_base64}" class="logo">
     </div>
-    """,
-    unsafe_allow_html=True
-)
+""", unsafe_allow_html=True)
+
+# ----------------- Restore Session -----------------
+query_params = st.query_params
+if not st.session_state.authenticated and "email" in query_params:
+    st.session_state.user_email = query_params["email"]
+    st.session_state.authenticated = True
 
 # ----------------- Authentication -----------------
 def login():
@@ -62,10 +55,11 @@ def login():
 
     if st.button("Log In"):
         try:
-            user = auth.sign_in_with_email_and_password(email, password)
+            auth.sign_in_with_email_and_password(email, password)
             st.session_state.authenticated = True
             st.session_state.user_email = email
             st.session_state.login_error = False
+            st.session_state.records = []
             st.query_params.update({"email": email})
             st.rerun()
         except:
@@ -77,19 +71,29 @@ def login():
 
     if st.button("Sign Up"):
         try:
-            user = auth.create_user_with_email_and_password(email, password)
+            auth.create_user_with_email_and_password(email, password)
             st.success("Account created! Please log in.")
         except:
             st.error("Could not create account. Try a different email.")
+
+# ----------------- Load Records -----------------
+def load_records():
+    try:
+        docs = db.collection("records").document(st.session_state.user_email).collection("entries").stream()
+        st.session_state.records = []
+        for doc in docs:
+            record = doc.to_dict()
+            record["doc_id"] = doc.id
+            st.session_state.records.append(record)
+    except Exception as e:
+        st.error(f"Failed to load records: {e}")
 
 # ----------------- Main App -----------------
 def main_app():
     st.title("Internship & Job Application Tracker")
     if st.button("Log Out"):
-        st.session_state.authenticated = False
-        st.session_state.user = None
-        st.session_state.login_error = False
-        st.session_state.user_email = None
+        for key in ["authenticated", "user_email", "records", "login_error"]:
+            st.session_state[key] = False if key == "authenticated" else None if key == "user_email" else [] if key == "records" else False
         st.query_params.clear()
         st.rerun()
 
@@ -103,7 +107,8 @@ def main_app():
         resume_file = col4.file_uploader("Resume", type=["pdf", "docx"])
         contact = col5.text_input("Contact Info")
         status = col6.selectbox("Current Status", [
-            "To Apply", "Online Test", "1st Interview", "2nd Interview", "3rd Interview", "Offer", "No Response", "Rejected"])
+            "To Apply", "Online Test", "1st Interview", "2nd Interview", "3rd Interview", "Offer", "No Response", "Rejected"
+        ])
 
         jd = st.text_area("Job Description")
         dt = st.date_input("Date", value=datetime.date.today())
@@ -128,20 +133,15 @@ def main_app():
             "date": str(dt)
         }
 
-        user_email = st.session_state.user_email
-
         try:
-            doc_ref = db.collection("records") \
-                        .document(user_email) \
-                        .collection("entries") \
-                        .add(record)
+            doc_ref = db.collection("records").document(st.session_state.user_email).collection("entries").add(record)
             record["doc_id"] = doc_ref[1].id
             st.session_state.records.append(record)
             st.success("Record written to Firestore successfully.")
         except Exception as e:
             st.error(f"❌ Firestore write failed: {e}")
 
-    st.markdown("""---""")
+    st.markdown("---")
     search = st.text_input("Search by company name")
 
     for i, r in enumerate(st.session_state.records):
@@ -159,26 +159,28 @@ def main_app():
                 else:
                     st.markdown("**Resume:** None")
                 st.markdown(f"**Contact:** {r['contact']}")
-                new_status = st.selectbox("Update Status", [
-                    "To Apply", "Online Test", "1st Interview", "2nd Interview", "3rd Interview", "Offer", "No Response", "Rejected"],
+
+                new_status = st.selectbox(
+                    "Update Status",
+                    ["To Apply", "Online Test", "1st Interview", "2nd Interview", "3rd Interview", "Offer", "No Response", "Rejected"],
                     index=["To Apply", "Online Test", "1st Interview", "2nd Interview", "3rd Interview", "Offer", "No Response", "Rejected"].index(r["status"]),
                     key=f"status_{i}"
                 )
+
                 if new_status != r["status"]:
-                    r["status"] = new_status
                     try:
                         doc_id = r.get("doc_id")
                         if doc_id:
-                            db.collection("records") \
-                              .document(st.session_state.user_email) \
-                              .collection("entries") \
-                              .document(doc_id) \
-                              .update({"status": new_status})
+                            db.collection("records").document(st.session_state.user_email).collection("entries").document(doc_id).update({"status": new_status})
+                            r["status"] = new_status
+                            st.success("Status updated successfully.")
                     except Exception as e:
                         st.error(f"❌ Failed to update status in Firestore: {e}")
-                if r["jd"]:
+
+                if r.get("jd"):
                     st.markdown("**Job Description:**")
                     st.code(r["jd"])
+
                 if st.button(f"Delete Record {i+1}", key=f"delete_{i}"):
                     try:
                         doc_id = r.get("doc_id")
@@ -199,20 +201,7 @@ def main_app():
                 st.markdown(href, unsafe_allow_html=True)
             os.remove(tmp.name)
 
-# ----------------- Restore Session -----------------
-query_params = st.query_params
-if not st.session_state.authenticated and "email" in query_params:
-    st.session_state.user_email = query_params["email"]
-    st.session_state.authenticated = True
-
 # ----------------- Run App -----------------
-def load_records():
-    docs = db.collection("records").document(st.session_state.user_email).collection("entries").stream()
-    for doc in docs:
-        record = doc.to_dict()
-        record["doc_id"] = doc.id
-        st.session_state.records.append(record)
-
 if st.session_state.authenticated and not st.session_state.records:
     load_records()
 
