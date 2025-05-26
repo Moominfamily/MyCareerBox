@@ -45,10 +45,10 @@ st.markdown(
         padding-top: 1.5rem !important;
     }}
     .logo-wrapper {{
-        margin-top: -2rem;
+        margin-top: -3rem;
         margin-bottom: -6rem;
         text-align: left;
-        padding-left: -1rem;
+        padding-left: -2rem;
     }}
     .logo {{
         height: 240px;
