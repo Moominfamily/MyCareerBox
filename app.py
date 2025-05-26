@@ -91,6 +91,7 @@ def login():
             st.session_state.records = fresh_records
             st.query_params.update({"email": email})
             st.rerun()
+            return
         except:
             st.session_state.login_error = True
             st.rerun()
