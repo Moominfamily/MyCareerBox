@@ -82,8 +82,12 @@ def login():
             st.session_state.user_email = email
             st.session_state.login_error = False
             st.session_state.records = []
-            load_records()
-            st.query_params.update({"email": email})
+            docs = db.collection("records").document(email).collection("entries").stream()
+            for doc in docs:
+                record = doc.to_dict()
+                record["doc_id"] = doc.id
+                st.session_state.records.append(record)
+        st.rerun()
             st.rerun()
         except:
             st.session_state.login_error = True
