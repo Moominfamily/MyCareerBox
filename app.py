@@ -88,7 +88,7 @@ def login():
                 record = doc.to_dict()
                 record["doc_id"] = doc.id
                 fresh_records.append(record)
-        st.session_state.records = fresh_records
+            st.session_state.records = fresh_records
             st.query_params.update({"email": email})
             st.rerun()
         except:
