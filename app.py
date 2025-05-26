@@ -176,15 +176,16 @@ def main_app():
                 )
 
                 if new_status != r["status"]:
-                    r["status"] = new_status
                     try:
-                        doc_id = r.get("doc_id")
+                       doc_id = r.get("doc_id")
                         if doc_id:
                             db.collection("records") \
                               .document(st.session_state.user_email) \
                               .collection("entries") \
                               .document(doc_id) \
                               .update({"status": new_status})
+                            r["status"] = new_status
+                            st.rerun()
                     except Exception as e:
                         st.error(f"❌ Failed to update status in Firestore: {e}")
                 if r["jd"]:
