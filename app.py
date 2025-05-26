@@ -61,7 +61,7 @@ def load_records():
         for doc in docs:
             record = doc.to_dict()
             record["doc_id"] = doc.id
-            st.session_state.records.append(record)
+            st.session_state.records.insert(0, record)
     except Exception as e:
         st.error(f"❌ Failed to load records: {e}")
 
@@ -146,7 +146,7 @@ def main_app():
                         .collection("entries") \
                         .add(record)
             record["doc_id"] = doc_ref[1].id
-            st.session_state.records.append(record)
+            st.session_state.records.insert(0, record)
             st.success("Record written to Firestore successfully.")
             st.rerun()
         except Exception as e:
