@@ -103,6 +103,7 @@ def main_app():
         st.session_state.authenticated = False
         st.session_state.user_email = None
         st.session_state.records = []
+        st.session_state.login_error = ""
         st.query_params.clear()
         st.rerun()
 
