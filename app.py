@@ -179,7 +179,9 @@ def main_app():
                     st.markdown("**Resume:** None")
                 if "account" in r:
                     st.markdown(f"**Account Used:** {r['account']}")
+
                 st.markdown(f"**Contact:** {r['contact']}")
+
                 new_status = st.selectbox(
                     "Update Status",
                     ["To Apply", "Online Test", "1st Interview", "2nd Interview", "3rd Interview", "Offer", "No Response", "Rejected"],
@@ -202,7 +204,7 @@ def main_app():
                         st.error(f"❌ Failed to update status in Firestore: {e}")
                 if r["jd"]:
                     st.markdown("**Job Description:**")
-                    st.code(r["jd"])
+                    st.text_area(" ", value=r["jd"], height=200, disabled=True)
                 if st.button(f"Delete Record {i+1}", key=f"delete_{i}"):
                     try:
                         doc_id = r.get("doc_id")
