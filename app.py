@@ -114,15 +114,15 @@ def main_app():
         account = col3.text_input("Account")
 
         col4, col5, col6 = st.columns(3)
-        url = col4.text_input("Application URL")
-        contact = col5.text_input("Contact Info")
-        dt = col6.date_input("Date", value=datetime.date.today())
+        dt = col4.date_input("Date", value=datetime.date.today())
+        status = col5.selectbox("Current Status", [
+            "To Apply", "Online Test", "1st Interview", "2nd Interview", "3rd Interview", "Offer", "No Response", "Rejected"
+        ])
+        contact = col6.text_input("Contact Info")
 
         col7, col8 = st.columns(2)
         resume_file = col7.file_uploader("Resume", type=["pdf", "docx"])
-        status = col8.selectbox("Current Status", [
-            "To Apply", "Online Test", "1st Interview", "2nd Interview", "3rd Interview", "Offer", "No Response", "Rejected"
-        ])
+        url = col8.text_input("Application URL")
 
         jd = st.text_area("Job Description")
 
