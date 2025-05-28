@@ -116,15 +116,15 @@ def main_app():
         col4, col5, col6 = st.columns(3)
         url = col4.text_input("Application URL")
         contact = col5.text_input("Contact Info")
-        status = col6.selectbox("Current Status", [
+        dt = col6.date_input("Date", value=datetime.date.today())
+
+        col7, col8 = st.columns(2)
+        resume_file = col7.file_uploader("Resume", type=["pdf", "docx"])
+        status = col8.selectbox("Current Status", [
             "To Apply", "Online Test", "1st Interview", "2nd Interview", "3rd Interview", "Offer", "No Response", "Rejected"
         ])
 
         jd = st.text_area("Job Description")
-
-        col7, col8 = st.columns(2)
-        dt = col7.date_input("Date", value=datetime.date.today())
-        resume_file = col8.file_uploader("Resume", type=["pdf", "docx"])
 
         submitted = st.form_submit_button("Add Record")
 
