@@ -203,8 +203,8 @@ def main_app():
                     except Exception as e:
                         st.error(f"❌ Failed to update status in Firestore: {e}")
                 if r["jd"]:
-                    st.markdown("**Job Description:**")
-                    st.text_area("", value=r["jd"], height=200, key=f"jd_view_{i}")
+                    st.markdown('<div style="font-weight: 600; font-size: 1rem; margin-bottom: -0.5rem;">Job Description:</div>', unsafe_allow_html=True)
+                    st.text_area(label="", value=r["jd"], height=200, key=f"jd_view_{i}")
                 if st.button(f"Delete Record {i+1}", key=f"delete_{i}"):
                     try:
                         doc_id = r.get("doc_id")
