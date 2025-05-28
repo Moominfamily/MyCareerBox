@@ -180,7 +180,22 @@ def main_app():
                 if "account" in r:
                     st.markdown(f"**Account Used:** {r['account']}")
 
-                st.markdown(f"**Contact:** {r['contact']}")
+                new_contact = st.text_input("Contact", value=r["contact"], key=f"contact_{i}")
+                if new_contact != r["contact"]:
+                    if st.button(f"Save Contact {i+1}", key=f"save_contact_{i}"):
+                        try:
+                            doc_id = r.get("doc_id")
+                            if doc_id:
+                                db.collection("records") \
+                                  .document(st.session_state.user_email) \
+                                  .collection("entries") \
+                                  .document(doc_id) \
+                                  .update({"contact": new_contact})
+                                r["contact"] = new_contact
+                                st.success("Contact updated.")
+                                st.rerun()
+                        except Exception as e:
+                            st.error(f"❌ Failed to update contact in Firestore: {e}")
 
                 new_status = st.selectbox(
                     "Update Status",
@@ -203,7 +218,7 @@ def main_app():
                     except Exception as e:
                         st.error(f"❌ Failed to update status in Firestore: {e}")
                 if r["jd"]:
-                    st.markdown('<div style="font-weight: 600; font-size: 1rem; margin-bottom: -2.5rem;">Job Description:</div>', unsafe_allow_html=True)
+                    st.markdown('<div style="font-weight: 600; font-size: 1rem; margin-bottom: -4rem;">Job Description:</div>', unsafe_allow_html=True)
                     st.text_area(label="", value=r["jd"], height=200, key=f"jd_view_{i}")
                 if st.button(f"Delete Record {i+1}", key=f"delete_{i}"):
                     try:
