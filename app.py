@@ -111,19 +111,21 @@ def main_app():
         col1, col2, col3 = st.columns(3)
         company = col1.text_input("Company")
         position = col2.text_input("Position")
-        url = col3.text_input("Application URL")
+        account = col3.text_input("Account")
 
-        col4, col5 = st.columns(2)
-        account = col4.text_input("Account")
+        col4, col5, col6 = st.columns(3)
+        url = col4.text_input("Application URL")
         contact = col5.text_input("Contact Info")
-
-        col6, col7 = st.columns(2)
-        resume_file = col6.file_uploader("Resume", type=["pdf", "docx"])
-        status = col7.selectbox("Current Status", [
-            "To Apply", "Online Test", "1st Interview", "2nd Interview", "3rd Interview", "Offer", "No Response", "Rejected"])
+        status = col6.selectbox("Current Status", [
+            "To Apply", "Online Test", "1st Interview", "2nd Interview", "3rd Interview", "Offer", "No Response", "Rejected"
+        ])
 
         jd = st.text_area("Job Description")
-        dt = st.date_input("Date", value=datetime.date.today())
+
+        col7, col8 = st.columns(2)
+        dt = col7.date_input("Date", value=datetime.date.today())
+        resume_file = col8.file_uploader("Resume", type=["pdf", "docx"])
+
         submitted = st.form_submit_button("Add Record")
 
     if submitted:
