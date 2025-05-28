@@ -42,7 +42,7 @@ st.markdown(
     f"""
     <style>
     .block-container {{padding-top: 3rem;}}
-    .logo-wrapper {{margin-top: -1rem; margin-bottom: -3rem;}}
+    .logo-wrapper {{margin-top: -1rem; margin-bottom: -5rem;}}
     .logo {{height: 240px; display: block;}}
     h1 {{font-size: 2rem !important;}}
     </style>
