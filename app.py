@@ -113,10 +113,13 @@ def main_app():
         position = col2.text_input("Position")
         url = col3.text_input("Application URL")
 
-        col4, col5, col6 = st.columns(3)
-        resume_file = col4.file_uploader("Resume", type=["pdf", "docx"])
+        col4, col5 = st.columns(2)
+        account = col4.text_input("Account")
         contact = col5.text_input("Contact Info")
-        status = col6.selectbox("Current Status", [
+
+        col6, col7 = st.columns(2)
+        resume_file = col6.file_uploader("Resume", type=["pdf", "docx"])
+        status = col7.selectbox("Current Status", [
             "To Apply", "Online Test", "1st Interview", "2nd Interview", "3rd Interview", "Offer", "No Response", "Rejected"])
 
         jd = st.text_area("Job Description")
@@ -137,6 +140,7 @@ def main_app():
             "url": url,
             "resume": filename,
             "contact": contact,
+            "account": account,
             "status": status,
             "jd": jd,
             "date": str(dt)
@@ -171,6 +175,8 @@ def main_app():
                     st.markdown(f"**Resume:** [{r['resume']}]({signed_url})")
                 else:
                     st.markdown("**Resume:** None")
+                if "account" in r:
+                    st.markdown(f"**Account Used:** {r['account']}")
                 st.markdown(f"**Contact:** {r['contact']}")
                 new_status = st.selectbox(
                     "Update Status",
